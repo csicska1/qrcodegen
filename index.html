@@ -56,6 +56,24 @@
           </select>
         </div>
       </div>
+      <div style="margin-top:12px">
+        <label style="display:block;color:var(--muted);font-size:12px;margin-bottom:6px">Uniqueness</label>
+        <div class="row">
+          <label style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="uniqToggle" /> Make unique each time
+          </label>
+          <select id="uniqMethod">
+            <option value="ts">Timestamp</option>
+            <option value="rand">Random</option>
+            <option value="count">Counter</option>
+            <option value="custom">Custom</option>
+          </select>
+          <input id="uniqCustom" type="text" placeholder="custom value" style="flex:1 1 200px;min-width:160px" />
+          <button id="resetCount">Reset counter</button>
+        </div>
+        <div class="small">When enabled, a query parameter is appended to the URL to make each QR distinct.</div>
+      </div>
+
       <div class="actions">
         <button id="gen" class="btn-primary">Generate</button>
         <button id="dl">Download PNG</button>
@@ -82,6 +100,7 @@
     const errBox = $('#err');
 
     const DEFAULT_URL = 'https://csicska1.github.io/addmisionpage/';
+    let uniqCounter = 1;
 
     function setError(msg){ if(!msg){ errBox.style.display='none'; errBox.textContent=''; return;} errBox.textContent=msg; errBox.style.display='block'; }
 
@@ -92,6 +111,22 @@
       const scale = parseInt(scaleEl.value,10);
       const border = parseInt(borderEl.value,10);
 
+      // Build final text, optionally appending uniqueness param
+      let finalText = text;
+      const enableUniq = document.getElementById('uniqToggle').checked;
+      if (enableUniq) {
+        const method = document.getElementById('uniqMethod').value;
+        const custom = (document.getElementById('uniqCustom').value || '').trim();
+        const u = new URL(finalText, window.location.href);
+        let key = 'u'; let val = '';
+        if (method === 'ts') { key = 't'; val = Date.now().toString(); }
+        else if (method === 'rand') { key = 'n'; val = Math.random().toString(36).slice(2, 10); }
+        else if (method === 'count') { key = 'c'; val = String(uniqCounter++); }
+        else if (method === 'custom') { key = 'x'; val = custom || Math.random().toString(36).slice(2, 8); }
+        u.searchParams.set(key, val);
+        finalText = u.toString();
+      }
+
       // Ensure canvas is cleared between attempts
       canvas.width = 0; canvas.height = 0; meta.textContent='';
 
@@ -100,8 +135,8 @@
       for (let i=0;i<levels.length;i++){
         const ecl = levels[i];
         try{
-          console.log('Generating QR', {len: text.length, ecl, range:'1-10'});
-          const qr = QRCode.generate(text, { ecl, minVersion: 1, maxVersion: 10 });
+          console.log('Generating QR', {len: finalText.length, ecl, range:'1-10'});
+          const qr = QRCode.generate(finalText, { ecl, minVersion: 1, maxVersion: 10 });
           console.log('QR generated', qr);
           QRCode.renderCanvas(qr, { canvas, scale, border });
           console.log('Rendered to canvas', {w: canvas.width, h: canvas.height});
@@ -114,7 +149,7 @@
           continue;
         }
       }
-      const info = `Input length: ${text.length} bytes | Tried ECLs: ${levels.join(' -> ')} | Versions: 1-10`;
+      const info = `Input length: ${finalText.length} bytes | Tried ECLs: ${levels.join(' -> ')} | Versions: 1-10`;
       setError((lastErr && lastErr.message ? lastErr.message : 'Failed to generate QR') + ' — ' + info);
     }
 
@@ -135,6 +170,7 @@
     $('#gen').addEventListener('click', generate);
     $('#dl').addEventListener('click', download);
     $('#copy').addEventListener('click', copyUrl);
+    document.getElementById('resetCount').addEventListener('click', ()=>{ uniqCounter = 1; });
 
     // Prefill
     (function init(){
