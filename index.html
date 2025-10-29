@@ -15,7 +15,7 @@
     .row{display:flex;gap:10px;flex-wrap:wrap}
     .btn-primary{background:var(--accent);color:#052e16;border:none;font-weight:700}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-    .canvas-wrap{background:white;padding:10px;border-radius:8px;display:inline-block}
+    .canvas-wrap{background:white;padding:16px;border-radius:8px;display:inline-block;box-shadow:0 0 0 1px rgba(0,0,0,0.06)}
     canvas{image-rendering:pixelated;display:block}
     .small{color:var(--muted);font-size:12px}
     .error{color:#fecaca;background:#7f1d1d;border:1px solid #991b1b;padding:8px 10px;border-radius:8px;display:none}
@@ -27,6 +27,7 @@
       <h2 style="margin:0 0 12px 0">Admissions QR Code</h2>
       <label for="url">Target URL</label>
       <input id="url" type="text" style="width:100%" placeholder="https://csicska1.github.io/addmisionpage/" />
+
       <div class="row" style="margin-top:12px">
         <div>
           <label for="ecl">Error correction</label>
@@ -50,12 +51,13 @@
         <div>
           <label for="border">Border</label>
           <select id="border">
-            <option>2</option>
-            <option selected>4</option>
-            <option>8</option>
+            <option>4</option>
+            <option selected>8</option>
+            <option>12</option>
           </select>
         </div>
       </div>
+
       <div style="margin-top:12px">
         <label style="display:block;color:var(--muted);font-size:12px;margin-bottom:6px">Uniqueness</label>
         <div class="row">
@@ -71,7 +73,9 @@
           <input id="uniqCustom" type="text" placeholder="custom value" style="flex:1 1 200px;min-width:160px" />
           <button id="resetCount">Reset counter</button>
         </div>
-        <div class="small">When enabled, a query parameter is appended to the URL to make each QR distinct.</div>
+        <div class="small">
+          When enabled, a query parameter is appended to the URL to make each QR distinct.
+        </div>
       </div>
 
       <div class="actions">
@@ -79,16 +83,25 @@
         <button id="dl">Download PNG</button>
         <button id="copy">Copy URL</button>
       </div>
+
       <div class="error" id="err"></div>
+
       <div style="margin-top:16px">
         <div class="canvas-wrap"><canvas id="qr"></canvas></div>
         <div class="small" id="meta" style="margin-top:8px"></div>
       </div>
-      <p class="small" style="margin-top:16px">Tip: You can open this page with a URL hash to prefill: index.html#https%3A%2F%2Fcsicska1.github.io%2Faddmisionpage%2F</p>
+
+      <p class="small" style="margin-top:16px">
+        Tip: Use Border ≥ 4 to provide a proper quiet zone so all three corner finder patterns are fully visible and scannable.<br>
+        Prefill: index.html#https%3A%2F%2Fcsicska1.github.io%2Faddmisionpage%2F
+      </p>
     </div>
   </div>
 
-  <script src="./qrcodegen.js"></script>
+  <!-- ✅ Load your fixed QR encoder -->
+  <script src="qrcodegen.js"></script>
+
+  <!-- ✅ Your page logic -->
   <script>
     const $ = s => document.querySelector(s);
     const urlEl = $('#url');
@@ -98,86 +111,75 @@
     const canvas = $('#qr');
     const meta = $('#meta');
     const errBox = $('#err');
-
     const DEFAULT_URL = 'https://csicska1.github.io/addmisionpage/';
     let uniqCounter = 1;
 
-    function setError(msg){ if(!msg){ errBox.style.display='none'; errBox.textContent=''; return;} errBox.textContent=msg; errBox.style.display='block'; }
+    function setError(msg) {
+      if (!msg) { errBox.style.display='none'; errBox.textContent=''; return; }
+      errBox.textContent = msg;
+      errBox.style.display = 'block';
+    }
 
-    function generate(){
+    function generate() {
       setError('');
       const text = (urlEl.value || '').trim();
-      if(!text){ setError('Enter a URL to encode.'); return; }
-      const scale = parseInt(scaleEl.value,10);
-      const border = parseInt(borderEl.value,10);
+      if (!text) { setError('Enter a URL to encode.'); return; }
 
-      // Build final text, optionally appending uniqueness param
+      const scale = parseInt(scaleEl.value, 10);
+      const border = Math.max(4, parseInt(borderEl.value, 10) || 4);
+
+      // Build final text with optional uniqueness
       let finalText = text;
-      const enableUniq = document.getElementById('uniqToggle').checked;
-      if (enableUniq) {
-        const method = document.getElementById('uniqMethod').value;
-        const custom = (document.getElementById('uniqCustom').value || '').trim();
+      if ($('#uniqToggle').checked) {
+        const method = $('#uniqMethod').value;
+        const custom = ($('#uniqCustom').value || '').trim();
         const u = new URL(finalText, window.location.href);
-        let key = 'u'; let val = '';
-        if (method === 'ts') { key = 't'; val = Date.now().toString(); }
-        else if (method === 'rand') { key = 'n'; val = Math.random().toString(36).slice(2, 10); }
-        else if (method === 'count') { key = 'c'; val = String(uniqCounter++); }
-        else if (method === 'custom') { key = 'x'; val = custom || Math.random().toString(36).slice(2, 8); }
-        u.searchParams.set(key, val);
+        let key='u', val='';
+        if (method==='ts') { key='t'; val=Date.now().toString(); }
+        else if (method==='rand') { key='n'; val=Math.random().toString(36).slice(2,10); }
+        else if (method==='count') { key='c'; val=String(uniqCounter++); }
+        else if (method==='custom') { key='x'; val=custom || Math.random().toString(36).slice(2,8); }
+        u.searchParams.set(key,val);
         finalText = u.toString();
       }
 
-      // Ensure canvas is cleared between attempts
-      canvas.width = 0; canvas.height = 0; meta.textContent='';
-
-      const levels = [eclEl.value, 'M', 'L'];
-      let lastErr = null;
-      for (let i=0;i<levels.length;i++){
-        const ecl = levels[i];
-        try{
-          console.log('Generating QR', {len: finalText.length, ecl, range:'1-10'});
-          const qr = QRCode.generate(finalText, { ecl, minVersion: 1, maxVersion: 10 });
-          console.log('QR generated', qr);
-          QRCode.renderCanvas(qr, { canvas, scale, border });
-          console.log('Rendered to canvas', {w: canvas.width, h: canvas.height});
-          meta.textContent = `Version ${qr.version} • ECL ${qr.ecl} • Size ${qr.size}×${qr.size}`;
-          setError('');
-          return;
-        }catch(err){
-          console.warn('QR generation failed for ECL', ecl, err);
-          lastErr = err;
-          continue;
-        }
+      try {
+        // ✅ Use your fixed qrcodegen.js encoder
+        const qr = QRCode.generate(finalText, { ecl: eclEl.value });
+        QRCode.renderCanvas(qr, { canvas, scale, border });
+        meta.textContent = `Version ${qr.version} • ECL ${qr.ecl} • Size ${qr.size}×${qr.size}`;
+      } catch (err) {
+        console.error(err);
+        setError('Failed to generate QR: ' + err.message);
       }
-      const info = `Input length: ${finalText.length} bytes | Tried ECLs: ${levels.join(' -> ')} | Versions: 1-10`;
-      setError((lastErr && lastErr.message ? lastErr.message : 'Failed to generate QR') + ' — ' + info);
     }
 
-    function download(){
-      if(!canvas.width){ setError('Generate a QR first.'); return; }
-      const a=document.createElement('a');
+    function download() {
+      if (!canvas.width) { setError('Generate a QR first.'); return; }
+      const a = document.createElement('a');
       a.href = canvas.toDataURL('image/png');
       a.download = 'admissions-qr.png';
       a.click();
     }
 
-    function copyUrl(){
-      const text=(urlEl.value||'').trim();
-      if(!text) return;
+    function copyUrl() {
+      const text = (urlEl.value || '').trim();
+      if (!text) return;
       navigator.clipboard.writeText(text).catch(()=>{});
     }
 
     $('#gen').addEventListener('click', generate);
     $('#dl').addEventListener('click', download);
     $('#copy').addEventListener('click', copyUrl);
-    document.getElementById('resetCount').addEventListener('click', ()=>{ uniqCounter = 1; });
+    $('#resetCount').addEventListener('click', ()=>{ uniqCounter = 1; });
 
-    // Prefill
+    // Prefill on load
     (function init(){
       let pre = DEFAULT_URL;
-      if(location.hash.length>1){ try{ pre = decodeURIComponent(location.hash.slice(1)); }catch{} }
+      if (location.hash.length > 1) {
+        try { pre = decodeURIComponent(location.hash.slice(1)); } catch {}
+      }
       urlEl.value = pre;
-      // auto-generate
       generate();
     })();
   </script>
