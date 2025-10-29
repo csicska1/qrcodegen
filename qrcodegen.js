@@ -128,7 +128,7 @@ Full version/ECL support (1..40, L/M/Q/H) with correct block structures.
   function getAlignmentPositions(version){ var pos=ALIGNMENT_PATTERN_LOCATIONS[version]; return pos; }
   function drawAlignment(m, version){ var pos=getAlignmentPositions(version); for (var i=0;i<pos.length;i++){ for (var j=0;j<pos.length;j++){ var x=pos[i], y=pos[j]; if (m[y][x]!==null) continue; for (var dy=-2; dy<=2; dy++){ for (var dx=-2; dx<=2; dx++){ var xx=x+dx, yy=y+dy; var dist=Math.max(Math.abs(dx),Math.abs(dy)); m[yy][xx]=(dist===2||dist===0); } } } } }
   function reserveFormat(m){ var n=m.length; for (var i=0;i<9;i++) if (m[8][i]===null) m[8][i]=false; for (var i2=0;i2<8;i2++) if (m[i2][8]===null) m[i2][8]=false; for (var i3=n-8;i3<n;i3++) if (m[8][i3]===null) m[8][i3]=false; for (var i4=n-7;i4<n;i4++) if (m[i4][8]===null) m[i4][8]=false; }
-  function drawDark(m){ m[4*(m.length-7)+9][8]=true; }
+  function drawDark(m, version){ var row = 4 * version + 9; m[row][8] = true; }
   function BCH(value, poly){ var msb=0; for (var i=value;i;i>>=1) msb++; value<<=(poly.toString(2).length-1); while (true){ var shift=0, t=poly; while (t){ shift++; t>>=1; } var diff = value.toString(2).length - shift; if (diff<0) break; value ^= (poly << diff); } return value; }
   function drawFormat(m, ecl, mask){ var n=m.length; var eclBits={L:1,M:0,Q:3,H:2}[ecl]; var data=(eclBits<<3)|mask; var rem=BCH(data,0x537); var bits=((data<<10)|rem)^0x5412; for (var i=0;i<=5;i++) m[8][i]=((bits>>>i)&1)!==0; m[8][7]=((bits>>>6)&1)!==0; m[8][8]=((bits>>>7)&1)!==0; m[7][8]=((bits>>>8)&1)!==0; for (var i2=9;i2<15;i2++) m[14-i2][8]=((bits>>>i2)&1)!==0; for (var j=0;j<8;j++) m[n-1-j][8]=((bits>>>j)&1)!==0; for (var i3=8;i3<15;i3++) m[8][n-15+i3]=((bits>>>i3)&1)!==0; m[8][n-8]=true; }
   function maskFunc(mask,i,j){ switch(mask){ case 0:return (i+j)%2===0; case 1:return i%2===0; case 2:return j%3===0; case 3:return (i+j)%3===0; case 4:return ((Math.floor(i/2)+Math.floor(j/3))%2)===0; case 5:return ((i*j)%2 + (i*j)%3)===0; case 6:return (((i*j)%2 + (i*j)%3)%2)===0; case 7:return (((i+j)%2 + (i*j)%3)%2)===0; default:return false; } }
@@ -237,7 +237,7 @@ Full version/ECL support (1..40, L/M/Q/H) with correct block structures.
 
     var m = buildMatrix(version);
     drawFinder(m,0,0); drawFinder(m,m.length-7,0); drawFinder(m,0,m.length-7);
-    drawSeparators(m); drawTiming(m); drawAlignment(m,version); reserveFormat(m); drawDark(m);
+    drawSeparators(m); drawTiming(m); drawAlignment(m,version); reserveFormat(m); drawDark(m, version);
 
     var bestMask=-1, bestScore=1e9, bestMatrix=null;
     for (var mask=0; mask<8; mask++){
