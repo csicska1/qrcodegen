@@ -1,83 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>QR Code Generator</title>
+  <title>QR Code Example</title>
+  <style>
+    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; }
+    #qrcode-container { width: 300px; height: 300px; }
+  </style>
 </head>
 <body>
   <div id="qrcode-container"></div>
 
-  <!-- Include the qrcodejs library -->
-  <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+  <!-- Include your QR code library -->
+  <script src="qrcode.js"></script> <!-- Replace with your full QR code JS file -->
 
   <script>
-    (function(global){
-      "use strict";
-
-      /**
-       * QRCode wrapper with fixed encoding
-       */
-      global.QRCode = {
-        /**
-         * Generate a QR code canvas
-         * @param {string} text - Data to encode
-         * @param {object} options - Optional settings: {size, ecl, dark, light}
-         * @returns {HTMLCanvasElement}
-         */
-        generate: function(text, options){
-          options = options || {};
-          const size = options.size || 256;
-          const ecl = options.ecl || "M";
-          const colorDark = options.dark || "#000000";
-          const colorLight = options.light || "#ffffff";
-
-          const levelMap = {
-            L: QRCode.CorrectLevel.L,
-            M: QRCode.CorrectLevel.M,
-            Q: QRCode.CorrectLevel.Q,
-            H: QRCode.CorrectLevel.H
-          };
-
-          const container = document.createElement("div");
-          const qrcode = new QRCode(container, {
-            text: text,
-            width: size,
-            height: size,
-            colorDark: colorDark,
-            colorLight: colorLight,
-            correctLevel: levelMap[ecl]
-          });
-
-          const canvas = container.querySelector("canvas");
-          if(!canvas) throw new Error("Failed to generate QR code");
-          return canvas;
-        },
-
-        /**
-         * Append a QR canvas to a parent element
-         * @param {HTMLCanvasElement} canvas 
-         * @param {HTMLElement} parent 
-         */
-        renderCanvas: function(canvas, parent){
-          parent = parent || document.body;
-          parent.appendChild(canvas);
-        }
-      };
-
-      // Example usage
+    window.addEventListener("DOMContentLoaded", function() {
       try {
-        const qr = QRCode.generate("https://example.com", {
-          size: 300,
-          ecl: "H",
-          dark: "#1a1a1a",
-          light: "#f2f2f2"
-        });
-        QRCode.renderCanvas(qr, document.getElementById("qrcode-container"));
-      } catch(err){
+        // Generate QR code (version is optional; library can auto-select)
+        const qrMatrix = QRCode.generate("https://example.com", 1, "H");
+        // Render QR code to canvas
+        const canvas = QRCode.renderCanvas(qrMatrix, 10); // cellSize = 10px
+        // Add the canvas to the container
+        const container = document.getElementById("qrcode-container");
+        container.innerHTML = "";
+        container.appendChild(canvas);
+      } catch(err) {
         console.error("Failed to generate QR:", err);
+        const container = document.getElementById("qrcode-container");
+        container.innerHTML = "<p style='color:red;'>QR code generation failed.</p>";
       }
-
-    })(this);
+    });
   </script>
 </body>
 </html>
