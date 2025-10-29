@@ -86,21 +86,36 @@
     function setError(msg){ if(!msg){ errBox.style.display='none'; errBox.textContent=''; return;} errBox.textContent=msg; errBox.style.display='block'; }
 
     function generate(){
-      try{
-        setError('');
-        const text = (urlEl.value || '').trim();
-        if(!text){ setError('Enter a URL to encode.'); return; }
-        const ecl = eclEl.value;
-        const scale = parseInt(scaleEl.value,10);
-        const border = parseInt(borderEl.value,10);
-        const qr = QRCode.generate(text, { ecl, minVersion: 1, maxVersion: 10 });
-        QRCode.renderCanvas(qr, { canvas, scale, border });
-        meta.textContent = `Version ${qr.version} • ECL ${qr.ecl} • Size ${qr.size}×${qr.size}`;
-      }catch(err){
-        console.error(err);
-        const info = `Input length: ${text.length} bytes | ECL: ${ecl} | Tried versions: 1-10`;
-        setError((err && err.message ? err.message : 'Failed to generate QR') + ' — ' + info);
+      setError('');
+      const text = (urlEl.value || '').trim();
+      if(!text){ setError('Enter a URL to encode.'); return; }
+      const scale = parseInt(scaleEl.value,10);
+      const border = parseInt(borderEl.value,10);
+
+      // Ensure canvas is cleared between attempts
+      canvas.width = 0; canvas.height = 0; meta.textContent='';
+
+      const levels = [eclEl.value, 'M', 'L'];
+      let lastErr = null;
+      for (let i=0;i<levels.length;i++){
+        const ecl = levels[i];
+        try{
+          console.log('Generating QR', {len: text.length, ecl, range:'1-10'});
+          const qr = QRCode.generate(text, { ecl, minVersion: 1, maxVersion: 10 });
+          console.log('QR generated', qr);
+          QRCode.renderCanvas(qr, { canvas, scale, border });
+          console.log('Rendered to canvas', {w: canvas.width, h: canvas.height});
+          meta.textContent = `Version ${qr.version} • ECL ${qr.ecl} • Size ${qr.size}×${qr.size}`;
+          setError('');
+          return;
+        }catch(err){
+          console.warn('QR generation failed for ECL', ecl, err);
+          lastErr = err;
+          continue;
+        }
       }
+      const info = `Input length: ${text.length} bytes | Tried ECLs: ${levels.join(' -> ')} | Versions: 1-10`;
+      setError((lastErr && lastErr.message ? lastErr.message : 'Failed to generate QR') + ' — ' + info);
     }
 
     function download(){
