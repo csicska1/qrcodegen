@@ -93,10 +93,14 @@
         const ecl = eclEl.value;
         const scale = parseInt(scaleEl.value,10);
         const border = parseInt(borderEl.value,10);
-        const qr = QRCode.generate(text, { ecl, minVersion: 1, maxVersion: 40 });
+        const qr = QRCode.generate(text, { ecl, minVersion: 1, maxVersion: 10 });
         QRCode.renderCanvas(qr, { canvas, scale, border });
         meta.textContent = `Version ${qr.version} • ECL ${qr.ecl} • Size ${qr.size}×${qr.size}`;
-      }catch(err){ console.error(err); setError(err.message || 'Failed to generate QR'); }
+      }catch(err){
+        console.error(err);
+        const info = `Input length: ${text.length} bytes | ECL: ${ecl} | Tried versions: 1-10`;
+        setError((err && err.message ? err.message : 'Failed to generate QR') + ' — ' + info);
+      }
     }
 
     function download(){
