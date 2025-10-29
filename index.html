@@ -1,187 +1,83 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admissions QR Code</title>
-  <style>
-    :root{--bg:#0f172a;--panel:#111827;--text:#e5e7eb;--muted:#9ca3af;--accent:#22c55e}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    .wrap{max-width:760px;margin:32px auto;padding:0 16px}
-    .card{background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:20px}
-    label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
-    input,select,button{padding:10px 12px;border-radius:8px;border:1px solid #374151;background:#0b1220;color:var(--text)}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .btn-primary{background:var(--accent);color:#052e16;border:none;font-weight:700}
-    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-    .canvas-wrap{background:white;padding:16px;border-radius:8px;display:inline-block;box-shadow:0 0 0 1px rgba(0,0,0,0.06)}
-    canvas{image-rendering:pixelated;display:block}
-    .small{color:var(--muted);font-size:12px}
-    .error{color:#fecaca;background:#7f1d1d;border:1px solid #991b1b;padding:8px 10px;border-radius:8px;display:none}
-  </style>
+  <meta charset="UTF-8">
+  <title>QR Code Generator</title>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h2 style="margin:0 0 12px 0">Admissions QR Code</h2>
-      <label for="url">Target URL</label>
-      <input id="url" type="text" style="width:100%" placeholder="https://csicska1.github.io/addmisionpage/" />
+  <div id="qrcode-container"></div>
 
-      <div class="row" style="margin-top:12px">
-        <div>
-          <label for="ecl">Error correction</label>
-          <select id="ecl">
-            <option value="L">L</option>
-            <option value="M" selected>M</option>
-            <option value="Q">Q</option>
-            <option value="H">H</option>
-          </select>
-        </div>
-        <div>
-          <label for="scale">Scale</label>
-          <select id="scale">
-            <option>6</option>
-            <option selected>8</option>
-            <option>10</option>
-            <option>12</option>
-            <option>16</option>
-          </select>
-        </div>
-        <div>
-          <label for="border">Border</label>
-          <select id="border">
-            <option>4</option>
-            <option selected>8</option>
-            <option>12</option>
-          </select>
-        </div>
-      </div>
+  <!-- Include the qrcodejs library -->
+  <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
 
-      <div style="margin-top:12px">
-        <label style="display:block;color:var(--muted);font-size:12px;margin-bottom:6px">Uniqueness</label>
-        <div class="row">
-          <label style="display:flex;align-items:center;gap:8px">
-            <input type="checkbox" id="uniqToggle" /> Make unique each time
-          </label>
-          <select id="uniqMethod">
-            <option value="ts">Timestamp</option>
-            <option value="rand">Random</option>
-            <option value="count">Counter</option>
-            <option value="custom">Custom</option>
-          </select>
-          <input id="uniqCustom" type="text" placeholder="custom value" style="flex:1 1 200px;min-width:160px" />
-          <button id="resetCount">Reset counter</button>
-        </div>
-        <div class="small">
-          When enabled, a query parameter is appended to the URL to make each QR distinct.
-        </div>
-      </div>
-
-      <div class="actions">
-        <button id="gen" class="btn-primary">Generate</button>
-        <button id="dl">Download PNG</button>
-        <button id="copy">Copy URL</button>
-      </div>
-
-      <div class="error" id="err"></div>
-
-      <div style="margin-top:16px">
-        <div class="canvas-wrap"><canvas id="qr"></canvas></div>
-        <div class="small" id="meta" style="margin-top:8px"></div>
-      </div>
-
-      <p class="small" style="margin-top:16px">
-        Tip: Use Border ≥ 4 to provide a proper quiet zone so all three corner finder patterns are fully visible and scannable.<br>
-        Prefill: index.html#https%3A%2F%2Fcsicska1.github.io%2Faddmisionpage%2F
-      </p>
-    </div>
-  </div>
-
-  <!-- ✅ Load your fixed QR encoder -->
-  <script src="qrcodegen.js"></script>
-
-  <!-- ✅ Your page logic -->
   <script>
-    const $ = s => document.querySelector(s);
-    const urlEl = $('#url');
-    const eclEl = $('#ecl');
-    const scaleEl = $('#scale');
-    const borderEl = $('#border');
-    const canvas = $('#qr');
-    const meta = $('#meta');
-    const errBox = $('#err');
-    const DEFAULT_URL = 'https://csicska1.github.io/addmisionpage/';
-    let uniqCounter = 1;
+    (function(global){
+      "use strict";
 
-    function setError(msg) {
-      if (!msg) { errBox.style.display='none'; errBox.textContent=''; return; }
-      errBox.textContent = msg;
-      errBox.style.display = 'block';
-    }
+      /**
+       * QRCode wrapper with fixed encoding
+       */
+      global.QRCode = {
+        /**
+         * Generate a QR code canvas
+         * @param {string} text - Data to encode
+         * @param {object} options - Optional settings: {size, ecl, dark, light}
+         * @returns {HTMLCanvasElement}
+         */
+        generate: function(text, options){
+          options = options || {};
+          const size = options.size || 256;
+          const ecl = options.ecl || "M";
+          const colorDark = options.dark || "#000000";
+          const colorLight = options.light || "#ffffff";
 
-    function generate() {
-      setError('');
-      const text = (urlEl.value || '').trim();
-      if (!text) { setError('Enter a URL to encode.'); return; }
+          const levelMap = {
+            L: QRCode.CorrectLevel.L,
+            M: QRCode.CorrectLevel.M,
+            Q: QRCode.CorrectLevel.Q,
+            H: QRCode.CorrectLevel.H
+          };
 
-      const scale = parseInt(scaleEl.value, 10);
-      const border = Math.max(4, parseInt(borderEl.value, 10) || 4);
+          const container = document.createElement("div");
+          const qrcode = new QRCode(container, {
+            text: text,
+            width: size,
+            height: size,
+            colorDark: colorDark,
+            colorLight: colorLight,
+            correctLevel: levelMap[ecl]
+          });
 
-      // Build final text with optional uniqueness
-      let finalText = text;
-      if ($('#uniqToggle').checked) {
-        const method = $('#uniqMethod').value;
-        const custom = ($('#uniqCustom').value || '').trim();
-        const u = new URL(finalText, window.location.href);
-        let key='u', val='';
-        if (method==='ts') { key='t'; val=Date.now().toString(); }
-        else if (method==='rand') { key='n'; val=Math.random().toString(36).slice(2,10); }
-        else if (method==='count') { key='c'; val=String(uniqCounter++); }
-        else if (method==='custom') { key='x'; val=custom || Math.random().toString(36).slice(2,8); }
-        u.searchParams.set(key,val);
-        finalText = u.toString();
-      }
+          const canvas = container.querySelector("canvas");
+          if(!canvas) throw new Error("Failed to generate QR code");
+          return canvas;
+        },
 
+        /**
+         * Append a QR canvas to a parent element
+         * @param {HTMLCanvasElement} canvas 
+         * @param {HTMLElement} parent 
+         */
+        renderCanvas: function(canvas, parent){
+          parent = parent || document.body;
+          parent.appendChild(canvas);
+        }
+      };
+
+      // Example usage
       try {
-        // ✅ Use your fixed qrcodegen.js encoder
-        const qr = QRCode.generate(finalText, { ecl: eclEl.value });
-        QRCode.renderCanvas(qr, { canvas, scale, border });
-        meta.textContent = `Version ${qr.version} • ECL ${qr.ecl} • Size ${qr.size}×${qr.size}`;
-      } catch (err) {
-        console.error(err);
-        setError('Failed to generate QR: ' + err.message);
+        const qr = QRCode.generate("https://example.com", {
+          size: 300,
+          ecl: "H",
+          dark: "#1a1a1a",
+          light: "#f2f2f2"
+        });
+        QRCode.renderCanvas(qr, document.getElementById("qrcode-container"));
+      } catch(err){
+        console.error("Failed to generate QR:", err);
       }
-    }
 
-    function download() {
-      if (!canvas.width) { setError('Generate a QR first.'); return; }
-      const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
-      a.download = 'admissions-qr.png';
-      a.click();
-    }
-
-    function copyUrl() {
-      const text = (urlEl.value || '').trim();
-      if (!text) return;
-      navigator.clipboard.writeText(text).catch(()=>{});
-    }
-
-    $('#gen').addEventListener('click', generate);
-    $('#dl').addEventListener('click', download);
-    $('#copy').addEventListener('click', copyUrl);
-    $('#resetCount').addEventListener('click', ()=>{ uniqCounter = 1; });
-
-    // Prefill on load
-    (function init(){
-      let pre = DEFAULT_URL;
-      if (location.hash.length > 1) {
-        try { pre = decodeURIComponent(location.hash.slice(1)); } catch {}
-      }
-      urlEl.value = pre;
-      generate();
-    })();
+    })(this);
   </script>
 </body>
 </html>
