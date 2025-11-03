@@ -1,36 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>QR Code Example</title>
-  <style>
-    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; }
-    #qrcode-container { width: 300px; height: 300px; }
-  </style>
-</head>
-<body>
-  <div id="qrcode-container"></div>
-
-  <!-- Include your QR code library -->
-  <script src="qrcode.js"></script> <!-- Replace with your full QR code JS file -->
-
-  <script>
-    window.addEventListener("DOMContentLoaded", function() {
-      try {
-        // Generate QR code (version is optional; library can auto-select)
-        const qrMatrix = QRCode.generate("https://example.com", 1, "H");
-        // Render QR code to canvas
-        const canvas = QRCode.renderCanvas(qrMatrix, 10); // cellSize = 10px
-        // Add the canvas to the container
-        const container = document.getElementById("qrcode-container");
-        container.innerHTML = "";
-        container.appendChild(canvas);
-      } catch(err) {
-        console.error("Failed to generate QR:", err);
-        const container = document.getElementById("qrcode-container");
-        container.innerHTML = "<p style='color:red;'>QR code generation failed.</p>";
-      }
-    });
-  </script>
-</body>
-</html>
+<canvas id="qr"></canvas>
+<script src="qrcodegen-lite.js"></script>
+<script>
+  const qr = QRCode.generate("Üdv, világ ✨", { ecLevel: 'M', version: 'auto' });
+  qr.toCanvas(document.getElementById('qr'), { scale: 6, margin: 4, dark: '#1a1a1a', light: '#fff' });
+  // vagy SVG
+  const svg = qr.toSVG({ scale: 6, margin: 4 });
+  document.body.insertAdjacentHTML('beforeend', svg);
+</script>
