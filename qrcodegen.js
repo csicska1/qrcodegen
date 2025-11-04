@@ -596,14 +596,6 @@ class QRCode {
     return svg;
   }
 
-  toDataURL(opts = {}) {
-    // returns data URL (PNG) via canvas; requires browser environment
-    if (typeof document === 'undefined') throw new Error("toDataURL requires a browser environment with Canvas");
-    const canvas = document.createElement('canvas');
-    this.toCanvas(canvas, opts);
-    return canvas.toDataURL();
-  }
-}
 
 // Export in Node / Browser friendly way
   toDataURL(opts = {}) {
