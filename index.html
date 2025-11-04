@@ -22,12 +22,12 @@
 <body>
   <canvas id="qr" width="256" height="256"></canvas>
 
-  <script src="qrcodegen-lite.js"></script>
+  <script src="qrcodegen.js"></script>
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       const QR = window.qrcodegen?.QRCode || window.QRCode;
       if (!QR) {
-        console.error("QRCode not found — check qrcodegen-lite.js path or name.");
+        console.error("QRCode not found — check qrcodegen.js path or name.");
         return;
       }
 
