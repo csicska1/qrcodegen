@@ -606,18 +606,14 @@ class QRCode {
 }
 
 // Export in Node / Browser friendly way
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-  module.exports = { QRCode };
-} else {
-  window.QRCode = QRCode;
-}  toDataURL(opts = {}) {
+  toDataURL(opts = {}) {
     if (typeof document === 'undefined')
       throw new Error("toDataURL requires a browser environment with Canvas");
     const canvas = document.createElement('canvas');
     this.toCanvas(canvas, opts);
     return canvas.toDataURL();
   }
-}  // <-- this closes the QRCode class
+}  // <-- closes QRCode class properly
 
 // --- make it available globally (browser + Node safe) ---
 (function (global) {
