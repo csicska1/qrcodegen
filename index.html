@@ -3,35 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <title>QR generátor</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #fafafa;
+      font-family: sans-serif;
+    }
+    canvas {
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+    }
+  </style>
 </head>
 <body>
-  <canvas id="qr"></canvas>
+  <canvas id="qr" width="256" height="256"></canvas>
 
-  <!-- make sure this file name matches your actual JS file -->
   <script src="qrcodegen-lite.js"></script>
-
   <script>
-    // Wait until the DOM and script have both loaded
     window.addEventListener('DOMContentLoaded', () => {
-      if (!window.QRCode) {
-        console.error("QRCode not found — check that qrcodegen-lite.js loaded correctly.");
+      const QR = window.qrcodegen?.QRCode || window.QRCode;
+      if (!QR) {
+        console.error("QRCode not found — check qrcodegen-lite.js path or name.");
         return;
       }
 
-      const qr = QRCode.generate("Üdv, világ ✨", {
+      const qr = QR.generate("Üdv, világ ✨", {
         ecLevel: 'M',
         version: 'auto'
       });
 
-      // Draw on the canvas
       qr.toCanvas(document.getElementById('qr'), {
         scale: 6,
         margin: 4,
         dark: '#1a1a1a',
-        light: '#fff'
+        light: '#ffffff'
       });
 
-      // Optional: also append the SVG
       const svg = qr.toSVG({ scale: 6, margin: 4 });
       document.body.insertAdjacentHTML('beforeend', svg);
     });
