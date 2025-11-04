@@ -1,101 +1,93 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-  <meta charset="UTF-8">
-  <title>QR generátor</title>
+  <meta charset="utf-8" />
+  <title>Hotspot QR</title>
   <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 1rem;
-      min-height: 100vh;
-      background: #f2f2f2;
-      font-family: system-ui, sans-serif;
-      padding-top: 2rem;
-    }
-    canvas {
-      border: 1px solid #ccc;
-    }
-    label {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.25rem;
-      font-size: 0.9rem;
-    }
-    input, select, button {
-      font-size: 1rem;
-      padding: 0.4rem 0.6rem;
-    }
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 0.75rem;
-      width: min(90%, 500px);
-    }
+    body{font-family:system-ui,Segoe UI,Arial;display:flex;flex-direction:column;gap:12px;align-items:center;padding:40px;background:#fafafa}
+    label{font-size:14px}
+    input{padding:8px;border:1px solid #ddd;border-radius:6px;width:260px}
+    button{padding:8px 12px;border-radius:6px;border:none;background:#111;color:#fff;cursor:pointer}
+    canvas{border:1px solid #eee;margin-top:8px}
+    .hint{font-size:12px;color:#666}
   </style>
 </head>
 <body>
-  <h1>QR generátor</h1>
+  <h2>Hotspot QR — jelszó belepakolva</h2>
 
-  <div class="controls">
-    <label>Szöveg:
-      <input id="text" value="Üdv, világ ✨">
-    </label>
-    <label>Sötét szín:
-      <input id="dark" type="color" value="#000000">
-    </label>
-    <label>Világos szín:
-      <input id="light" type="color" value="#ffffff">
-    </label>
-    <label>Méret (scale):
-      <input id="scale" type="number" value="6" min="2" max="20">
-    </label>
-    <label>Hibatűrés:
-      <select id="ecc">
-        <option value="L">L – alacsony</option>
-        <option value="M" selected>M – közepes</option>
-        <option value="Q">Q – jó</option>
-        <option value="H">H – magas</option>
-      </select>
-    </label>
+  <!-- Fix SSID itt: változtasd meg ha más a hotspot neve -->
+  <div>
+    <label>SSID (hálózat neve):</label>
+    <div style="font-weight:600;margin:6px 0">MyHotspot</div>
   </div>
 
-  <button id="make">QR létrehozása</button>
-  <canvas id="qr" width="256" height="256"></canvas>
+  <div>
+    <label>Jelszó:</label>
+    <input id="pwd" type="text" placeholder="Írd be a hotspot jelszavát" value="" />
+  </div>
+
+  <div>
+    <label>Titkosítás:</label>
+    <select id="enc">
+      <option value="WPA" selected>WPA/WPA2</option>
+      <option value="WEP">WEP</option>
+      <option value="nopass">Nincs jelszó</option>
+    </select>
+  </div>
+
+  <button id="gen">QR generálása</button>
+  <div class="hint">A QR beolvasása után a telefon felajánlja a csatlakozást. Nem kényszerít semmit — csak megkönnyíti a beírást.</div>
+
+  <canvas id="qr"></canvas>
 
   <script src="qrcodegen.js"></script>
   <script>
-    const textInput = document.getElementById('text');
-    const darkInput = document.getElementById('dark');
-    const lightInput = document.getElementById('light');
-    const scaleInput = document.getElementById('scale');
-    const eccInput = document.getElementById('ecc');
-    const canvas = document.getElementById('qr');
-    const ctx = canvas.getContext('2d');
+    // fix SSID (ha akarod, csinálhatsz inputot is hozzá)
+    const SSID = "MyHotspot";
 
-    function makeQR() {
-      const data = textInput.value.trim() || " ";
-      const qr = QRCode.generate(data, { ecLevel: eccInput.value, version: 'auto' });
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      qr.toCanvas(canvas, {
-        scale: Number(scaleInput.value),
-        dark: darkInput.value,
-        light: lightInput.value,
-        margin: 4
-      });
+    // escapespecial char per QR Wi-Fi spec (nagyjából)
+    function escapeWiFi(s){
+      return String(s)
+        .replace(/\\/g, "\\\\")
+        .replace(/;/g, "\\;")
+        .replace(/,/g, "\\,")
+        .replace(/:/g, "\\:");
     }
 
-    document.getElementById('make').addEventListener('click', makeQR);
+    function makeWifiString(ssid, pwd, enc){
+      // if nopass, leave P: empty and T:nopass
+      if(enc === "nopass") return `WIFI:T:nopass;S:${escapeWiFi(ssid)};;`;
+      return `WIFI:T:${enc};S:${escapeWiFi(ssid)};P:${escapeWiFi(pwd)};;`;
+    }
 
-    // optional live update on input changes
-    [textInput, darkInput, lightInput, scaleInput, eccInput].forEach(el =>
-      el.addEventListener('input', makeQR)
-    );
+    function generate() {
+      const pwd = document.getElementById("pwd").value || "";
+      const enc = document.getElementById("enc").value || "WPA";
+      const wifiPayload = makeWifiString(SSID, pwd, enc);
 
-    window.addEventListener('DOMContentLoaded', makeQR);
+      if(!window.QRCode || typeof QRCode.generate !== "function"){
+        console.error("QRCode.generate() nem található. Ellenőrizd a qrcodegen.js-t.");
+        return;
+      }
+
+      const qr = QRCode.generate(wifiPayload, { ecLevel: "M", version: "auto" });
+      const canvas = document.getElementById("qr");
+
+      // tisztítás — biztos, ami biztos
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      qr.toCanvas(canvas, { scale: 6, margin: 4, dark: "#000", light: "#fff" });
+    }
+
+    document.getElementById("gen").addEventListener("click", generate);
+
+    // auto-generate on load with empty (so user can just paste pwd and press button)
+    window.addEventListener("DOMContentLoaded", () => {
+      // ha szeretnéd, ide állíthatsz alapértéket a jelszónak:
+      // document.getElementById('pwd').value = 'supersecret';
+      generate();
+    });
   </script>
 </body>
 </html>
