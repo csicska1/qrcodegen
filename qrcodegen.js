@@ -610,4 +610,19 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
   module.exports = { QRCode };
 } else {
   window.QRCode = QRCode;
-}
+}  toDataURL(opts = {}) {
+    if (typeof document === 'undefined')
+      throw new Error("toDataURL requires a browser environment with Canvas");
+    const canvas = document.createElement('canvas');
+    this.toCanvas(canvas, opts);
+    return canvas.toDataURL();
+  }
+}  // <-- this closes the QRCode class
+
+// --- make it available globally (browser + Node safe) ---
+(function (global) {
+  global.QRCode = QRCode;
+  QRCode.generate = function (text, options = {}) {
+    return new QRCode(text, options).generate();
+  };
+})(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : this));
