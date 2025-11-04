@@ -8,41 +8,65 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       gap: 1rem;
       min-height: 100vh;
       background: #f2f2f2;
       font-family: system-ui, sans-serif;
+      padding-top: 2rem;
     }
     canvas {
       border: 1px solid #ccc;
     }
+    label {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+      font-size: 0.9rem;
+    }
     input, select, button {
       font-size: 1rem;
       padding: 0.4rem 0.6rem;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      width: min(90%, 500px);
     }
   </style>
 </head>
 <body>
   <h1>QR generátor</h1>
 
-  <label>Szöveg: <input id="text" value="Üdv, világ ✨"></label>
-  <label>Sötét szín: <input id="dark" type="color" value="#000000"></label>
-  <label>Világos szín: <input id="light" type="color" value="#ffffff"></label>
-  <label>Méret: <input id="scale" type="number" value="6" min="2" max="20"></label>
-  <label>Hibatűrés: 
-    <select id="ecc">
-      <option value="L">L – alacsony</option>
-      <option value="M" selected>M – közepes</option>
-      <option value="Q">Q – jó</option>
-      <option value="H">H – magas</option>
-    </select>
-  </label>
-  <button id="make">QR létrehozása</button>
+  <div class="controls">
+    <label>Szöveg:
+      <input id="text" value="Üdv, világ ✨">
+    </label>
+    <label>Sötét szín:
+      <input id="dark" type="color" value="#000000">
+    </label>
+    <label>Világos szín:
+      <input id="light" type="color" value="#ffffff">
+    </label>
+    <label>Méret (scale):
+      <input id="scale" type="number" value="6" min="2" max="20">
+    </label>
+    <label>Hibatűrés:
+      <select id="ecc">
+        <option value="L">L – alacsony</option>
+        <option value="M" selected>M – közepes</option>
+        <option value="Q">Q – jó</option>
+        <option value="H">H – magas</option>
+      </select>
+    </label>
+  </div>
 
+  <button id="make">QR létrehozása</button>
   <canvas id="qr" width="256" height="256"></canvas>
 
-  <script src="qrcodegen.js"></script>
+  <script src="qrcodegen-lite.js"></script>
   <script>
     const textInput = document.getElementById('text');
     const darkInput = document.getElementById('dark');
@@ -50,14 +74,12 @@
     const scaleInput = document.getElementById('scale');
     const eccInput = document.getElementById('ecc');
     const canvas = document.getElementById('qr');
+    const ctx = canvas.getContext('2d');
 
     function makeQR() {
-      const data = textInput.value || " ";
-      const qr = new QRCode(data, {
-        ecLevel: eccInput.value,
-        version: 'auto'
-      }).generate();
-
+      const data = textInput.value.trim() || " ";
+      const qr = QRCode.generate(data, { ecLevel: eccInput.value, version: 'auto' });
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       qr.toCanvas(canvas, {
         scale: Number(scaleInput.value),
         dark: darkInput.value,
@@ -67,6 +89,12 @@
     }
 
     document.getElementById('make').addEventListener('click', makeQR);
+
+    // optional live update on input changes
+    [textInput, darkInput, lightInput, scaleInput, eccInput].forEach(el =>
+      el.addEventListener('input', makeQR)
+    );
+
     window.addEventListener('DOMContentLoaded', makeQR);
   </script>
 </body>
