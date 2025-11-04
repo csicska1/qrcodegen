@@ -9,43 +9,65 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      background: #fafafa;
-      font-family: sans-serif;
+      gap: 1rem;
+      min-height: 100vh;
+      background: #f2f2f2;
+      font-family: system-ui, sans-serif;
     }
     canvas {
-      margin-bottom: 1rem;
       border: 1px solid #ccc;
+    }
+    input, select, button {
+      font-size: 1rem;
+      padding: 0.4rem 0.6rem;
     }
   </style>
 </head>
 <body>
+  <h1>QR generátor</h1>
+
+  <label>Szöveg: <input id="text" value="Üdv, világ ✨"></label>
+  <label>Sötét szín: <input id="dark" type="color" value="#000000"></label>
+  <label>Világos szín: <input id="light" type="color" value="#ffffff"></label>
+  <label>Méret: <input id="scale" type="number" value="6" min="2" max="20"></label>
+  <label>Hibatűrés: 
+    <select id="ecc">
+      <option value="L">L – alacsony</option>
+      <option value="M" selected>M – közepes</option>
+      <option value="Q">Q – jó</option>
+      <option value="H">H – magas</option>
+    </select>
+  </label>
+  <button id="make">QR létrehozása</button>
+
   <canvas id="qr" width="256" height="256"></canvas>
 
   <script src="qrcodegen.js"></script>
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const QR = window.qrcodegen?.QRCode || window.QRCode;
-      if (!QR) {
-        console.error("QRCode not found — check qrcodegen.js path or name.");
-        return;
-      }
+    const textInput = document.getElementById('text');
+    const darkInput = document.getElementById('dark');
+    const lightInput = document.getElementById('light');
+    const scaleInput = document.getElementById('scale');
+    const eccInput = document.getElementById('ecc');
+    const canvas = document.getElementById('qr');
 
-      const qr = QR.generate("Üdv, világ ✨", {
-        ecLevel: 'M',
+    function makeQR() {
+      const data = textInput.value || " ";
+      const qr = new QRCode(data, {
+        ecLevel: eccInput.value,
         version: 'auto'
-      });
+      }).generate();
 
-      qr.toCanvas(document.getElementById('qr'), {
-        scale: 6,
-        margin: 4,
-        dark: '#1a1a1a',
-        light: '#ffffff'
+      qr.toCanvas(canvas, {
+        scale: Number(scaleInput.value),
+        dark: darkInput.value,
+        light: lightInput.value,
+        margin: 4
       });
+    }
 
-      const svg = qr.toSVG({ scale: 6, margin: 4 });
-      document.body.insertAdjacentHTML('beforeend', svg);
-    });
+    document.getElementById('make').addEventListener('click', makeQR);
+    window.addEventListener('DOMContentLoaded', makeQR);
   </script>
 </body>
 </html>
