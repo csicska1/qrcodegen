@@ -1,119 +1,55 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="hu">
 <head>
-<meta charset="utf-8"/>
-<title>Hotspot QR — debug</title>
-<style>
-  body{font-family:system-ui,Segoe UI,Arial;margin:28px;background:#fafafa;color:#111}
-  .wrap{max-width:520px;margin:0 auto;text-align:center}
-  canvas{border:1px solid #ddd;background:#fff;margin-top:12px}
-  .payload{margin-top:12px;padding:10px;background:#fff;border:1px solid #eee;font-family:monospace;word-break:break-all}
-  button{margin:8px;padding:8px 12px;border-radius:6px;border:0;background:#111;color:#fff;cursor:pointer}
-  .hint{color:#666;font-size:13px;margin-top:8px}
-</style>
+  <meta charset="UTF-8">
+  <title>Hotspot QR</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: system-ui, sans-serif;
+      text-align: center;
+    }
+    canvas {
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <h2>Hotspot QR — debug</h2>
 
-    <!-- Edit these values to match your hotspot EXACTLY -->
-    <div>
-      <label><strong>SSID:</strong></label>
-      <div id="ssid" contenteditable="true" style="padding:6px;border:1px solid #ddd;background:#fff;margin:6px 0">toth_pal_IPhone</div>
-    </div>
+  <h2>Csatlakozás a Hotspotomhoz</h2>
+  <canvas id="qr"></canvas>
 
-    <div>
-      <label><strong>Password:</strong></label>
-      <div id="pwd" contenteditable="true" style="padding:6px;border:1px solid #ddd;background:#fff;margin:6px 0">diane wolfington</div>
-    </div>
+  <!-- A TE QR generátor fájlod -->
+  <script src="qrcodegen.js"></script>
 
-    <div style="margin-top:6px">
-      <label><strong>Encryption:</strong></label>
-      <select id="enc" style="padding:6px;margin-left:6px">
-        <option value="WPA">WPA</option>
-        <option value="WPA2">WPA2</option>
-        <option value="WEP">WEP</option>
-        <option value="nopass">nopass</option>
-      </select>
-    </div>
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      // Írd be pontosan úgy, ahogy a telefonod mutatja
+      const ssid = "toth_pal_IPhone";
+      const password = "diane wolfington";
+      const encryption = "WPA"; // vagy "WPA2", ha úgy van beállítva
 
-    <div style="margin-top:12px">
-      <button id="gen">Generate QR</button>
-      <button id="download">Download PNG</button>
-    </div>
+      // QR kód adat
+      const payload = `WIFI:T:${encryption};S:${ssid};P:${password};;`;
 
-    <canvas id="qr" width="320" height="320"></canvas>
+      // QR generálása
+      const qr = QRCode.generate(payload, { ecLevel: "M", version: "auto" });
 
-    <div class="payload" id="payload">Payload will appear here</div>
-    <div class="hint">
-      Steps to test: <br>
-      1) Ensure hotspot is active and "Maximize Compatibility" (2.4GHz) is ON. <br>
-      2) Click <b>Generate QR</b>. The exact encoded string shows below the QR. <br>
-      3) Scan QR with another phone (not the hotspot device). Or click Download and upload the PNG to <a href="https://zxing.org/w/decode.jspx" target="_blank">zxing.org/decode</a> to decode the payload. <br>
-      4) If decoded payload matches the text below and other phone still doesn't show the "Connect" prompt, it's a hotspot/phone issue (not the QR).
-    </div>
-  </div>
+      // Kirajzoljuk canvasra
+      qr.toCanvas(document.getElementById("qr"), {
+        scale: 8,
+        margin: 2,
+        dark: "#fff",
+        light: "#111"
+      });
+    });
+  </script>
 
-<script src="qrcodegen.js"></script>
-<script>
-  // small safe escape for special chars used in wifi QR payload
-  function escapeWiFi(s){
-    return String(s)
-      .replace(/\\/g,'\\\\')
-      .replace(/;/g,'\\;')
-      .replace(/,/g,'\\,')
-      .replace(/:/g,'\\:');
-  }
-
-  function makeWiFiString(ssid, pwd, enc){
-    if(enc === 'nopass') return `WIFI:T:nopass;S:${escapeWiFi(ssid)};;`;
-    return `WIFI:T:${enc};S:${escapeWiFi(ssid)};P:${escapeWiFi(pwd)};;`;
-  }
-
-  const canvas = document.getElementById('qr');
-  const payloadEl = document.getElementById('payload');
-
-  function draw() {
-    const ssid = document.getElementById('ssid').innerText.trim();
-    const pwd  = document.getElementById('pwd').innerText.trim();
-    const enc  = document.getElementById('enc').value;
-
-    // show exact string
-    const payload = makeWiFiString(ssid, pwd, enc);
-    payloadEl.textContent = payload;
-    console.log('Wi-Fi payload:', payload);
-
-    if(!window.QRCode || typeof QRCode.generate !== 'function'){
-      payloadEl.textContent = 'ERROR: QRCode.generate() not found; check qrcodegen.js load';
-      return;
-    }
-
-    // generate & draw
-    try{
-      const qr = QRCode.generate(payload, { ecLevel: 'M', version: 'auto' });
-      // clear canvas first
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      qr.toCanvas(canvas, { scale: 8, margin: 4, dark: '#000', light: '#fff' });
-    }catch(e){
-      payloadEl.textContent = 'ERROR generating QR: ' + e.message;
-      console.error(e);
-    }
-  }
-
-  document.getElementById('gen').addEventListener('click', draw);
-
-  // download PNG
-  document.getElementById('download').addEventListener('click', () => {
-    draw(); // ensure current
-    const link = document.createElement('a');
-    link.download = 'wifi-qr.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  });
-
-  // auto-generate on load
-  window.addEventListener('DOMContentLoaded', draw);
-</script>
 </body>
 </html>
