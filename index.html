@@ -9,7 +9,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: #ffffff;
+      background: white;
     }
   </style>
 </head>
@@ -26,10 +26,13 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const data = `WIFI:T:${encryption};S:${ssid};P:${password};;`;
 
-  const qr = qrcodegen.QrCode.encodeText(data, qrcodegen.QrCode.Ecc.M);
-
-  const canvas = document.getElementById("qr");
-  qr.drawCanvas(10, 4, canvas);
+  const qr = new QRCode(data);
+  qr.toCanvas(document.getElementById("qr"), {
+    scale: 12,
+    margin: 4,
+    dark: "#000",
+    light: "#fff"
+  });
 });
 </script>
 
