@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Hotspot QR</title>
-<style>
-  body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background: #ffffff;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>WiFi QR</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #ffffff;
+    }
+  </style>
 </head>
 <body>
 
@@ -20,22 +20,16 @@
 <script src="qrcodegen.js"></script>
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-
   const ssid = "toth_pal_IPhone";
   const password = "diane wolfington";
-  const encryption = "WPA2";
+  const encryption = "WPA";
 
-  const data = `WIFI:T:${encryption};S:${ssid};P:${password};H:false;;`;
+  const data = `WIFI:T:${encryption};S:${ssid};P:${password};;`;
 
-  const qr = QRCode.generate(data, { ecLevel: "M" });
+  const qr = qrcodegen.QrCode.encodeText(data, qrcodegen.QrCode.Ecc.M);
 
-  const qr = new QRCode(`WIFI:T:WPA;S:${ssid};P:${password};;`);
-qr.toCanvas(document.getElementById("qr"), {
-  scale: 12,
-  margin: 4,
-  dark: "#000",
-  light: "#fff"
-  });
+  const canvas = document.getElementById("qr");
+  qr.drawCanvas(10, 4, canvas);
 });
 </script>
 
