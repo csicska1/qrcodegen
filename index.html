@@ -21,18 +21,20 @@
 <script src="qrcodegen.js"></script>
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  const ssid = "toth_pal_IPhone";       // <- írd be a te WiFi neved PONTOSAN
-  const password = "diane wolfington";  // <- jelszó
-  const encryption = "WPA";             // ha iPhone hotspot, az WPA/WPA2 jó
+  const ssid = "toth_pal_IPhone";       
+  const password = "diane wolfington";  
+  const encryption = "WPA";
 
   const data = `WIFI:T:${encryption};S:${ssid};P:${password};;`;
 
-  const qr = new QRCode(data);
+  // *** EZ A LÉNYEG ***
+  const qr = QRCode.generate(data);
+
   qr.toCanvas(document.getElementById("qr"), {
     scale: 14,
     margin: 2,
-    dark: "#fff",    // QR fehér
-    light: "#000"    // háttér fekete
+    dark: "#fff",
+    light: "#000"
   });
 });
 </script>
