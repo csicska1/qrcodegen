@@ -5,11 +5,12 @@
   <title>WiFi QR</title>
   <style>
     body {
+      margin: 0;
+      background: #000;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: white;
     }
   </style>
 </head>
@@ -20,18 +21,18 @@
 <script src="qrcodegen.js"></script>
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  const ssid = "toth_pal_IPhone";
-  const password = "diane wolfington";
-  const encryption = "WPA";
+  const ssid = "toth_pal_IPhone";       // <- írd be a te WiFi neved PONTOSAN
+  const password = "diane wolfington";  // <- jelszó
+  const encryption = "WPA";             // ha iPhone hotspot, az WPA/WPA2 jó
 
   const data = `WIFI:T:${encryption};S:${ssid};P:${password};;`;
 
   const qr = new QRCode(data);
   qr.toCanvas(document.getElementById("qr"), {
-    scale: 12,
-    margin: 4,
-    dark: "#000",
-    light: "#fff"
+    scale: 14,
+    margin: 2,
+    dark: "#fff",    // QR fehér
+    light: "#000"    // háttér fekete
   });
 });
 </script>
