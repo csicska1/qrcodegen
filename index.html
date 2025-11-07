@@ -15,39 +15,27 @@
       font-family: system-ui, sans-serif;
       text-align: center;
     }
-    canvas {
-      margin-top: 20px;
-    }
   </style>
 </head>
 <body>
 
-  <h2>Csatlakozás a Hotspotomhoz</h2>
-  <canvas id="qr"></canvas>
+  <h2>Csatlakozás a hotspotra</h2>
+  <div id="qrcode"></div>
 
-  <!-- A TE QR generátor fájlod -->
-  <script src="qrcodegen.js"></script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      // Írd be pontosan úgy, ahogy a telefonod mutatja
-      const ssid = "toth_pal_IPhone";
-      const password = "diane wolfington";
-      const encryption = "WPA"; // vagy "WPA2", ha úgy van beállítva
+    // Írd be pontosan úgy, ahogy az iPhone mutatja
+    const ssid = "toth_pal_IPhone";
+    const password = "diane wolfington";
+    const encryption = "WPA"; 
+    
+    const wifiString = `WIFI:T:${encryption};S:${ssid};P:${password};;`;
 
-      // QR kód adat
-      const payload = `WIFI:T:${encryption};S:${ssid};P:${password};;`;
-
-      // QR generálása
-      const qr = QRCode.generate(payload, { ecLevel: "M", version: "auto" });
-
-      // Kirajzoljuk canvasra
-      qr.toCanvas(document.getElementById("qr"), {
-        scale: 8,
-        margin: 2,
-        dark: "#fff",
-        light: "#111"
-      });
+    new QRCode(document.getElementById("qrcode"), {
+      text: wifiString,
+      width: 256,
+      height: 256,
+      correctLevel: QRCode.CorrectLevel.M
     });
   </script>
 
