@@ -1,43 +1,42 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-  <meta charset="UTF-8">
-  <title>Hotspot QR</title>
-  <style>
-    body {
-      background: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      font-family: system-ui, sans-serif;
-      text-align: center;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Hotspot QR</title>
+<style>
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #ffffff;
+  }
+</style>
 </head>
 <body>
 
-  <h2>Csatlakozás a hotspotra</h2>
-  <div id="qrcode"></div>
+<canvas id="qr"></canvas>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script>
-    // Írd be pontosan úgy, ahogy az iPhone mutatja
-    const ssid = "toth_pal_IPhone";
-    const password = "diane wolfington";
-    const encryption = "WPA2"; 
-    
-    const wifiString = `WIFI:T:${encryption};S:${ssid};P:${password};;`;
+<script src="qrcodegen.js"></script>
+<script>
+window.addEventListener("DOMContentLoaded", () => {
 
-    new QRCode(document.getElementById("qrcode"), {
-      text: wifiString,
-      width: 256,
-      height: 256,
-      correctLevel: QRCode.CorrectLevel.M
-    });
-  </script>
+  const ssid = "toth_pal_IPhone";
+  const password = "diane wolfington";
+  const encryption = "WPA2";
+
+  const data = `WIFI:T:${encryption};S:${ssid};P:${password};H:false;;`;
+
+  const qr = QRCode.generate(data, { ecLevel: "M" });
+
+  qr.toCanvas(document.getElementById("qr"), {
+    scale: 10,
+    margin: 2,
+    dark: "#000",
+    light: "#fff"
+  });
+});
+</script>
 
 </body>
 </html>
