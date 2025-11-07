@@ -29,11 +29,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const qr = QRCode.generate(data, { ecLevel: "M" });
 
-  qr.toCanvas(document.getElementById("qr"), {
-    scale: 10,
-    margin: 2,
-    dark: "#000",
-    light: "#fff"
+  const qr = new QRCode(`WIFI:T:WPA;S:${ssid};P:${password};;`);
+qr.toCanvas(document.getElementById("qr"), {
+  scale: 12,
+  margin: 4,
+  dark: "#000",
+  light: "#fff"
   });
 });
 </script>
